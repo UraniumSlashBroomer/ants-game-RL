@@ -1,11 +1,14 @@
 #include <iostream>
-#include 'game_generation.cpp'
+#include "../headers/game.h"
+#include "../headers/render.h"
 
 using namespace std;
 
-int main(){
+int main() {
 
-cout << "hello" << endl;
+    WorldState world_state = gameInit();
 
-return 0;
+    renderGame(world_state);
+
+    return 0;
 } 

@@ -99,10 +99,3 @@ void printState(WorldState state) {
         cout << "Max possible weight: " << unit.max_weight << "." << endl;
     }
 }
-
-int main() {
-    WorldState worldState = gameInit();
-    printState(worldState);
-    return 0;
-}
-
