@@ -1,5 +1,0 @@
-CompileFlags:
-  Add:
-    - -I/opt/libtorch/include
-    - -I/opt/libtorch/include/torch/csrc/api/include
-    - -std=c++17
