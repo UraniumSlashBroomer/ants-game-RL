@@ -48,7 +48,7 @@ struct Action {
     v2i delta;
 };
 
-void applyAction(WorldState& state, const Action& action);
+void applyAction(vector<Unit>& units, const Action& action);
 
 Tile generateOneTile(v2i pos, int move_cost, int food_weight);
 vector<vector<Tile>> generateTiles(int width, int height);

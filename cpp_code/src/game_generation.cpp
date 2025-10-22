@@ -78,6 +78,11 @@ WorldState gameInit() {
     return world_state;
 }
 
+void applyAction(vector<Unit>& units, Action action) {
+    units[action.unit_index].pos.x += action.delta.x;
+    units[action.unit_index].pos.y += action.delta.y;
+}
+
 void printState(WorldState state) {
     cout << "World width: " << state.width << endl;
     cout << "World height: " << state.height << endl;
