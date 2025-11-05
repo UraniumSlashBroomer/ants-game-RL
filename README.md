@@ -1,10 +1,11 @@
 # ants-game-RL
 #TODO
-[ ] fix reward function
-[ ] create memory class
-[ ] create ppo loss function
-[ ] create training loop function
+[x] fix reward function
+[x] create memory class
+[x] create ppo loss function
+[x] create training loop function
 
 # What else I can do?
-[ ] make environment like gym.Env
+[ ] make environment like gym.Env (?)
 [ ] make better visualization
+[ ] create logging for debug training proccess
