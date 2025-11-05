@@ -2,4 +2,4 @@ build/
 .clangd
 cpp_code/
 .venv
-
+checkpoint.pth

@@ -12,7 +12,7 @@ FONT_SIZE = 8
 
 pygame.init()
 pygame.font.init()
-screen = pygame.display.set_mode((1200, 800))
+screen = pygame.display.set_mode((600, 400))
 font = pygame.font.Font(None, size=12)
 
 def draw_units(screen, font, units: list) -> None:
@@ -22,7 +22,8 @@ def draw_units(screen, font, units: list) -> None:
         
         pygame.draw.circle(screen, (255, 255, 255), (x, y), UNIT_SIZE)
         
-def draw_map(screen, font, tiles: dict, visible_tiles_coords: set) -> None:
+def draw_map(screen, font, tiles: dict, visible_tiles_coords: list) -> None:
+    visible_tiles_coords = set(visible_tiles_coords)
     for tile in tiles.values():
         x = tile.coords[0] * (TILE_SIZE + TILE_GAP)
         y = tile.coords[1] * (TILE_SIZE + TILE_GAP)
@@ -41,12 +42,9 @@ def draw_map(screen, font, tiles: dict, visible_tiles_coords: set) -> None:
 
 
 def draw_env(env) -> None: 
-        
-    width = env.map.width
-    height = env.map.height
     tiles = env.map.tiles
     units = env.units
 
-    visible_tiles_coords = utils.get_visible_coords(units, width, height)
+    visible_tiles_coords = utils.get_visible_coords(units)
     draw_map(screen, font, tiles, visible_tiles_coords)
     draw_units(screen, font, units)

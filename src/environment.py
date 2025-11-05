@@ -14,6 +14,8 @@ class Unit:
                                  self.move_up,
                                  self.move_down]
 
+        self.possible_actions = {i: action for (i, action) in enumerate(self.possible_actions)}
+
     def interact(self, tiles: dict, spawn_coords: tuple) -> int:
         # unit drop food at spawn
         if self.coords == spawn_coords:
@@ -59,10 +61,11 @@ class Unit:
 
 
 class Tile:
-    def __init__(self, init_coords: tuple, move_cost: int, food_weight: int) -> None:
+    def __init__(self, init_coords: tuple) -> None:
         self.coords = init_coords
-        self.move_cost = move_cost
-        self.food_weight = food_weight
+        self.move_cost = 1
+        self.food_weight = np.random.randint(3, 8) if np.random.randn() > 0.8 else 0
+        self.food_weight = 5
 
 class Map:
     def __init__(self, width: int, height: int, spawn_coords: tuple) -> None:
@@ -76,13 +79,11 @@ class Map:
         for i in range(self.width):
             for j in range(self.height):
                 coords = (i, j)
-                move_cost = 1
-                food_weight = np.random.randint(1, 3) if np.random.randn() > 0.5 else 0
+                tile = Tile(coords)
                 if coords[0] == self.spawn_coords[0] and coords[1] == self.spawn_coords[1]:
-                    move_cost = 0
-                    food_weight = 0
+                    tile.move_cost = 0
+                    tile.food_weight = 0
 
-                tile = Tile(coords, move_cost, food_weight)
                 self.tiles[coords] = tile
 
         return self.tiles
@@ -91,6 +92,7 @@ class Environment:
     def __init__(self, width: int, height: int, spawn_coords: tuple, num_units: int) -> None:
         self.map = Map(width, height, spawn_coords)
         self.units = self._generate_units(num_units, spawn_coords)
+        self.num_units = num_units
 
     def _generate_units(self, num_units: int, spawn_coords: tuple) -> list: 
         self.units = []
@@ -102,3 +104,24 @@ class Environment:
             self.units.append(unit)
 
         return self.units
+
+    def reset(self):
+        self.__init__(self.map.width, self.map.height, self.map.spawn_coords, self.num_units)
+
+class Memory:
+    def __init__(self):
+        self.clear()
+
+    def update(self, state, action_index, logprob, reward, done):
+        self.states.append(state)
+        self.action_indexes.append(action_index)
+        self.log_probs.append(logprob)
+        self.rewards.append(reward)
+        self.dones.append(done)
+
+    def clear(self):
+        self.states = []
+        self.action_indexes = []
+        self.log_probs = []
+        self.rewards = []
+        self.dones = []
