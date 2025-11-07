@@ -1,7 +1,7 @@
 import torch
-import torch.nn.functional as F
 import numpy as np
 import environment
+import sys
 
 def get_visible_coords(units: list) -> list:
     visible_tiles_coords = list()
@@ -113,7 +113,7 @@ def rewards_to_go(rewards: list, dones: list, gamma: float) -> torch.Tensor:
 def calc_advantages(rtg: torch.Tensor, values: torch.Tensor) -> torch.Tensor:
     return rtg - values
 
-def get_log_proba_and_action_ind(actor, state, possible_actions, device):
+def get_log_proba_and_action_ind(actor, state, possible_actions, mode, device):
     if actor.__class__.__name__ == 'DumbModel':
         return torch.log(actor.proba).item(), np.random.choice(possible_actions.keys())
     else:
@@ -122,13 +122,23 @@ def get_log_proba_and_action_ind(actor, state, possible_actions, device):
 
         actor = actor.to(device)
         state = state.to(device)
+
         with torch.no_grad():
             logits = actor(state)
             dist = torch.distributions.Categorical(logits=logits)
-
-        ind = dist.sample()
+        
+        if mode == 'train':
+            ind = dist.sample()
+        elif mode == 'eval':
+            ind = dist.mode
+        
         log_prob = dist.log_prob(ind)
-        return log_prob.item(), ind.item()
+
+        try:
+            return log_prob.item(), ind.item()
+        except NameError:
+            print('Error. Mode (train or eval) provided incorrectly')
+            sys.exit(1)
 
 def is_episode_ended(env) -> bool:
     FOOD_WEIGHT_TO_STOP = 5

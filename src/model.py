@@ -8,8 +8,9 @@ import pygame
 import visualization as vis
 import sys
 import environment
+from datetime import datetime
 
-def ppo_loss(actor, states: torch.Tensor, actions_indexes: list, old_log_probs: list, advantages: torch.Tensor, clip_epsilon: float = 0.2) -> torch.Tensor:
+def ppo_loss(actor, states: torch.Tensor, actions_indexes: list, old_log_probs: list, advantages: torch.Tensor, clip_epsilon: float = 0.25) -> torch.Tensor:
     old_log_probs_t = torch.Tensor(old_log_probs)
     old_log_probs_t = old_log_probs_t.to(states.device)
 
@@ -22,7 +23,7 @@ def ppo_loss(actor, states: torch.Tensor, actions_indexes: list, old_log_probs: 
 
     return loss
 
-def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, num_iters, num_timestamps, epochs, device, visualization=True):
+def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, num_iters, num_timestamps, epochs, device, logs_file, visualization=True):
     memory = environment.Memory()
     actor = actor.to(device)
     critic = critic.to(device)
@@ -32,6 +33,9 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, n
     counter = 0
     win_counter = 0
     N = 20
+    
+    # logs
+    logs_file.write(f'date: {datetime.now().date()}, time: {datetime.now().time()}\n\n')
 
     if visualization:
         FPS = 1024
@@ -56,7 +60,7 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, n
             visible_tile_coords = utils.get_visible_coords(env.units)
             state = utils.get_state(env, visible_tile_coords)
             
-            log_prob, action_ind = utils.get_log_proba_and_action_ind(actor, state, env.units[0].possible_actions, device)
+            log_prob, action_ind = utils.get_log_proba_and_action_ind(actor, state, env.units[0].possible_actions, 'train', device)
             action = env.units[0].possible_actions[action_ind]
             reward = utils.release_action_and_get_reward(env, action)
             iter_reward += reward
@@ -82,6 +86,9 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, n
 
         actor.train()
         critic.train()
+        
+        # logs
+        logs_file.write(f'iter: {iteration + 1}. Iter reward: {np.round(iter_reward, 2)}. Iter wins: {win_counter}.\n')
 
         print(f'iter: {iteration + 1}. Iter reward: {np.round(iter_reward, 2)}. Iter wins: {win_counter}.')
         for epoch in range(epochs):
@@ -95,8 +102,13 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env,  gamma, n
             optimizer_critic.zero_grad()
             loss_critic.backward()
             optimizer_critic.step()
+            
+            # logs
+            logs_file.write(f'Epoch {epoch + 1}/{epochs}. loss actor {loss_actor}, loss critic {loss_critic}\n')
             print(f'Epoch {epoch + 1}/{epochs}. loss actor {loss_actor}, loss critic {loss_critic}')
         
+        logs_file.write('\n')
+
         win_counter = 0
 
         actor.eval()
