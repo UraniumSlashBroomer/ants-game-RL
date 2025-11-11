@@ -8,22 +8,28 @@ class Unit:
         self.current_weight = 0
         self.view_radius = 3
 
-        self.possible_actions = [self.interact,
+        self.possible_actions = [self.lay_down,
+                                 self.pickup,
                                  self.move_left,
                                  self.move_right,
                                  self.move_up,
                                  self.move_down]
 
         self.possible_actions = {i: action for (i, action) in enumerate(self.possible_actions)}
-
-    def interact(self, tiles: dict, spawn_coords: tuple) -> int:
+    
+    def lay_down(self, tiles: dict, spawn_coords: tuple) -> int:
         # unit drop food at spawn
         if self.coords == spawn_coords:
             tiles[spawn_coords].food_weight += self.current_weight
             self.current_weight = 0
+            return 1
+        else:
             return -1
 
-        # else unit pickup food
+    def pickup(self, tiles: dict, spawn_coords: tuple) -> int:
+        if self.coords == spawn_coords:
+            return -1
+
         weight = tiles[self.coords].food_weight
 
         possible_pickup = min(self.max_weight - self.current_weight, weight)
@@ -64,8 +70,7 @@ class Tile:
     def __init__(self, init_coords: tuple) -> None:
         self.coords = init_coords
         self.move_cost = 1
-        self.food_weight = np.random.randint(3, 8) if np.random.randn() > 0.8 else 0
-        self.food_weight = 5
+        self.food_weight = np.random.randint(3, 8) if np.random.randn() > 0.8 else 1
 
 class Map:
     def __init__(self, width: int, height: int, spawn_coords: tuple) -> None:

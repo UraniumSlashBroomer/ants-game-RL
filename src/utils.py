@@ -72,25 +72,35 @@ move_left,
 move_right,
 move_up,
 move_down, 
-interact
+lay_down,
+puckup
 """
 
 def release_action_and_get_reward(env, action) -> float:
-    FOOD_WEIGHT_TO_STOP = 5
+    FOOD_WEIGHT_TO_STOP = 10
     spawn_coords = env.map.spawn_coords
     unit = action.__self__
-    if action.__name__ == 'interact':
-        unit_food = unit.current_weight
-        unit_coords = unit.coords
+    unit_food = unit.current_weight
+    unit_coords = unit.coords
+
+    if action.__name__ == 'pickup':
         tile_food = env.map.tiles[unit_coords].food_weight
 
         remainder = action(env.map.tiles, spawn_coords)
-        if remainder == env.map.tiles[unit.coords].food_weight or (remainder == -1 and unit_food == 0) or (remainder != -1 and tile_food == 0): # unsuccessful interact
+        if remainder == tile_food or (remainder == 0 and tile_food == 0) or (remainder == -1): # unsuccessful pickup
             return -2
-        else: # successful interact
-            if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP:
-                return 25
+        else: # successful pickup
             return 2
+
+    elif action.__name__ == 'lay_down':
+        remainder = action(env.map.tiles, spawn_coords)
+        if remainder == 1 and unit_food != 0: # successful lay down
+            if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP: # finish
+                return 25
+            elif unit_food != 0:
+                return 2
+        else: # unsuccessful lay down
+            return -2   
     else: # move action
         unit_coords = unit.coords
         new_unit_coords = action(env.map.width, env.map.height)
@@ -130,7 +140,7 @@ def get_log_proba_and_action_ind(actor, state, possible_actions, mode, device):
         if mode == 'train':
             ind = dist.sample()
         elif mode == 'eval':
-            ind = dist.mode
+            ind = torch.argmax(dist.probs)
         
         log_prob = dist.log_prob(ind)
 
@@ -141,7 +151,7 @@ def get_log_proba_and_action_ind(actor, state, possible_actions, mode, device):
             sys.exit(1)
 
 def is_episode_ended(env) -> bool:
-    FOOD_WEIGHT_TO_STOP = 5
+    FOOD_WEIGHT_TO_STOP = 10
     spawn_coords = env.map.spawn_coords
 
     if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP:
