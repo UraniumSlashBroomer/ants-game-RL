@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import environment
 import sys
+import yaml
 
 def get_visible_coords(units: list) -> list:
     visible_tiles_coords = list()
@@ -14,7 +15,8 @@ def get_visible_coords(units: list) -> list:
     
     return visible_tiles_coords
 
-def get_state(env, visible_tiles_coords) -> list:
+def get_state(env) -> list:
+    visible_tiles_coords = get_visible_coords(env.units)
     """
     state:
     [
@@ -77,7 +79,7 @@ puckup
 """
 
 def release_action_and_get_reward(env, action) -> float:
-    FOOD_WEIGHT_TO_STOP = 10
+    FOOD_WEIGHT_TO_STOP = 5
     spawn_coords = env.map.spawn_coords
     unit = action.__self__
     unit_food = unit.current_weight
@@ -151,10 +153,24 @@ def get_log_proba_and_action_ind(actor, state, possible_actions, mode, device):
             sys.exit(1)
 
 def is_episode_ended(env) -> bool:
-    FOOD_WEIGHT_TO_STOP = 10
+    FOOD_WEIGHT_TO_STOP = 5
     spawn_coords = env.map.spawn_coords
 
     if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP:
         return True
     else: 
         return False
+
+def load_checkpoint(actor, critic, checkpoint: str):
+        results = torch.load(checkpoint, map_location=torch.device('cpu'))
+
+        actor.load_state_dict(results['actor_dict_state'])
+        critic.load_state_dict(results['critic_dict_state'])
+
+        return actor, critic
+
+def load_config(path: str) -> dict:
+    with open(path) as f:
+        config = yaml.safe_load(f)
+
+    return config

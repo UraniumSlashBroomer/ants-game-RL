@@ -22,8 +22,10 @@ def draw_units(screen, font, units: list) -> None:
         
         pygame.draw.circle(screen, (255, 255, 255), (x, y), UNIT_SIZE)
         
-def draw_map(screen, font, tiles: dict, visible_tiles_coords: list) -> None:
+def draw_map(screen, font, tiles: dict, units: list) -> None:
+    visible_tiles_coords = utils.get_visible_coords(units)
     visible_tiles_coords = set(visible_tiles_coords)
+
     for tile in tiles.values():
         x = tile.coords[0] * (TILE_SIZE + TILE_GAP)
         y = tile.coords[1] * (TILE_SIZE + TILE_GAP)
@@ -45,6 +47,5 @@ def draw_env(env) -> None:
     tiles = env.map.tiles
     units = env.units
 
-    visible_tiles_coords = utils.get_visible_coords(units)
-    draw_map(screen, font, tiles, visible_tiles_coords)
+    draw_map(screen, font, tiles, units)
     draw_units(screen, font, units)
