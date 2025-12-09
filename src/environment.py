@@ -67,40 +67,63 @@ class Unit:
 
 
 class Tile:
-    def __init__(self, init_coords: tuple) -> None:
+    def __init__(self, init_coords: tuple, food_weight: int) -> None:
         self.coords = init_coords
+        self.food_weight = food_weight
         self.move_cost = 1
-        self.food_weight = np.random.randint(3, 8) if np.random.randn() > 0.8 else 1
-        self.food_weight = np.random.randint(5, 10)
 
 class Map:
-    def __init__(self, width: int, height: int, spawn_coords: tuple) -> None:
+    def __init__(self, width: int, height: int, spawn_coords: tuple, food_to_stop: int, food_scaler: float) -> None:
         self.width = width
         self.height = height
         self.spawn_coords = spawn_coords
+        self.food_to_stop = food_to_stop
+        self.food_scaler = food_scaler
         self.tiles = self._generate_tiles()
 
     def _generate_tiles(self) -> dict:
         self.tiles = {}
+
+        mi = self.food_to_stop / (self.width * self.height) * self.food_scaler
+
+        food_weights = np.random.poisson(lam=mi,
+                                        size=(self.width, self.height))
+        
+        food_weights[self.spawn_coords[0], self.spawn_coords[1]] = 0
+
+        remainder = self.food_to_stop - food_weights.sum()
+        
+        while remainder > 0:
+            i, j = np.random.choice(self.width), np.random.choice(self.height)
+            
+            if i == self.spawn_coords[0] and j == self.spawn_coords[1]:
+                continue
+
+            food_weight = np.random.poisson(lam=mi)
+
+            food_weights[i, j] += food_weight
+            remainder -= food_weight
+
         for i in range(self.width):
             for j in range(self.height):
                 coords = (i, j)
-                tile = Tile(coords)
+                
+                tile = Tile(coords, food_weights[i, j])
                 if coords[0] == self.spawn_coords[0] and coords[1] == self.spawn_coords[1]:
                     tile.move_cost = 0
-                    tile.food_weight = 0
 
                 self.tiles[coords] = tile
 
         return self.tiles
 
 class Environment:
-    def __init__(self, width: int, height: int, spawn_coords: tuple, num_units: int, food_to_stop: int) -> None:
+    def __init__(self, width: int, height: int, spawn_coords: tuple, num_units: int, food_to_stop: int, food_scaler: float) -> None:
         spawn_coords = tuple(spawn_coords)
-        self.map = Map(width, height, spawn_coords)
+        self.map = Map(width, height, spawn_coords, food_to_stop, food_scaler)
         self.units = self._generate_units(num_units, spawn_coords)
         self.num_units = num_units
         self.food_to_stop = food_to_stop
+        self.food_scaler = food_scaler
 
     def _generate_units(self, num_units: int, spawn_coords: tuple) -> list: 
         self.units = []
@@ -114,7 +137,7 @@ class Environment:
         return self.units
 
     def reset(self):
-        self.__init__(self.map.width, self.map.height, self.map.spawn_coords, self.num_units, self.food_to_stop)
+        self.__init__(self.map.width, self.map.height, self.map.spawn_coords, self.num_units, self.food_to_stop, self.food_scaler)
 
 class Memory:
     def __init__(self):

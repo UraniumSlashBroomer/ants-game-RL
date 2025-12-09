@@ -21,7 +21,7 @@ def ppo_loss(actor, states: torch.Tensor, actions_indexes: list, old_log_probs: 
 
     return loss
 
-def train_model(actor, critic, optimizer_actor, optimizer_critic, env, gamma, num_episodes, horizon, num_epochs, clip_eps, device, logs_file, visualization=True):
+def train_model(actor, critic, optimizer_actor, optimizer_critic, env, gamma, num_episodes, horizon, num_epochs, clip_eps, length_of_one_game, device, logs_file, visualization=True):
     memory = environment.Memory()
     actor = actor.to(device)
     critic = critic.to(device)
@@ -30,7 +30,6 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env, gamma, nu
 
     counter = 0
     win_counter = 0
-    N = 20
     
     if visualization:
         FPS = 1024
@@ -62,7 +61,7 @@ def train_model(actor, critic, optimizer_actor, optimizer_critic, env, gamma, nu
             if done:
                 win_counter += 1
 
-            if done or counter == N:
+            if done or counter == length_of_one_game:
                 counter = 0
                 done = True
                 env.reset()

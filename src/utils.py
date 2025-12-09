@@ -3,6 +3,8 @@ import numpy as np
 import environment
 import sys
 import yaml
+import model
+from datetime import datetime
 
 def get_visible_coords(units: list) -> list:
     visible_tiles_coords = list()
@@ -38,9 +40,9 @@ def get_state(env) -> list:
     """
     state = []
 
-    fake_tile = environment.Tile((-1, -1))
-    fake_tile.food_weight = 0
+    fake_tile = environment.Tile((-1, -1), 0)
     fake_tile.move_cost = 0
+
     for coords in visible_tiles_coords:
         try:
             tile = env.map.tiles[coords]
@@ -79,7 +81,6 @@ puckup
 """
 
 def release_action_and_get_reward(env, action) -> float:
-    FOOD_WEIGHT_TO_STOP = 5
     spawn_coords = env.map.spawn_coords
     unit = action.__self__
     unit_food = unit.current_weight
@@ -97,7 +98,7 @@ def release_action_and_get_reward(env, action) -> float:
     elif action.__name__ == 'lay_down':
         remainder = action(env.map.tiles, spawn_coords)
         if remainder == 1 and unit_food != 0: # successful lay down
-            if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP: # finish
+            if env.map.tiles[spawn_coords].food_weight >= env.food_to_stop: # finish
                 return 25
             elif unit_food != 0:
                 return 2
@@ -153,10 +154,9 @@ def get_log_proba_and_action_ind(actor, state, possible_actions, mode, device):
             sys.exit(1)
 
 def is_episode_ended(env) -> bool:
-    FOOD_WEIGHT_TO_STOP = 5
     spawn_coords = env.map.spawn_coords
 
-    if env.map.tiles[spawn_coords].food_weight >= FOOD_WEIGHT_TO_STOP:
+    if env.map.tiles[spawn_coords].food_weight >= env.food_to_stop:
         return True
     else: 
         return False
@@ -174,3 +174,33 @@ def load_config(path: str) -> dict:
         config = yaml.safe_load(f)
 
     return config
+
+def init_models_and_optimizers(config: dict, env):
+    state = get_state(env)
+
+    actor_hidden_dim = config['models']['actor']['hidden_dim']
+    critic_hidden_dim = config['models']['critic']['hidden_dim']
+
+    actor = model.PolicyModel(state_dim=len(state),
+                        hidden_dim=actor_hidden_dim,
+                        actions_dim=len(env.units[0].possible_actions)
+                        )
+
+    critic = model.CriticModel(state_dim=len(state),
+                               hidden_dim=critic_hidden_dim)
+
+    optimizer_actor_lr = config['models']['actor']['lr']
+    optimizer_critic_lr = config['models']['critic']['lr']
+
+    optimizer_actor = torch.optim.Adam(actor.parameters(), lr=optimizer_actor_lr)
+    optimizer_critic = torch.optim.Adam(critic.parameters(), lr=optimizer_critic_lr)
+ 
+    return actor, critic, optimizer_actor, optimizer_critic
+
+def write_head_in_log(config: dict, file) -> None:
+        file.write(f'training params:\nactor hidden state: {config['models']['actor']['hidden_dim']}, critic hidden state: {config['models']['critic']['hidden_dim']}\n')
+        file.write(f'optimizer actor lr: {config['models']['actor']['lr']}, optimizer critic lr: {config['models']['critic']['lr']}\n')
+        file.write(f'gamma: {config['ppo']['gamma']}, num iters (episodes): {config['train']['num_episodes']}, num timestamps (horizon): {config['train']['horizon']}, num epochs: {config['train']['num_epochs']}.\n\n')
+        file.write(f'env params:\nwidth {config['env']['map']['width']}, height: {config['env']['map']['height']}, spawn coords: {config['env']['map']['spawn_coords']}, num units: {config['env']['map']['num_units']}\n\n')
+        file.write(f'date: {datetime.now().date()}, time: {datetime.now().time()}\n\n')
+ 

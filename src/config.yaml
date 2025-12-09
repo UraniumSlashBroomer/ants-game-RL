@@ -1,31 +1,33 @@
 ppo:
   gamma: 0.99
-  clip_eps: 0.25
+  clip_eps: 0.2
 
 models:
   actor:
-    hidden_state_dim: 4096
+    hidden_dim: 4096
     lr: 0.0003
   
   critic:
-    hidden_state_dim: 1024
-    lr: 0.001
+    hidden_dim: 1024
+    lr: 0.0003
 
 env:
   map:
-    width: 2
-    height: 1
-    spawn_coords: [0, 0]
+    width: 3
+    height: 3
+    spawn_coords: [1, 1]
     num_units: 1 # DO NOT MODIFY THIS PARAMETER
     food_to_stop: 5
+    food_scaler: 5
   
   unit:
-    max_unit_food: 5
+    max_unit_food: 10
   
 train:
   num_episodes: 30
-  num_epochs: 5
-  horizon: 8192
+  num_epochs: 10
+  horizon: 2048
+  length_of_one_game: 64
   
 train_viz:
   FPS: 10000

@@ -9,11 +9,17 @@ UNIT_SIZE = 16
 
 FONT_SIZE = 8
 
+def init_pygame() -> None:
+    pygame.init()
+    pygame.font.init()
+    
+    global screen
+    global font
 
-pygame.init()
-pygame.font.init()
-screen = pygame.display.set_mode((600, 400))
-font = pygame.font.Font(None, size=12)
+    screen = pygame.display.set_mode((600, 400))
+    font = pygame.font.Font(None, size=12)
+    
+    return None
 
 def draw_units(screen, font, units: list) -> None:
     for unit in units:
@@ -44,6 +50,9 @@ def draw_map(screen, font, tiles: dict, units: list) -> None:
 
 
 def draw_env(env) -> None: 
+    if 'screen' not in globals():
+        init_pygame()
+
     tiles = env.map.tiles
     units = env.units
 
