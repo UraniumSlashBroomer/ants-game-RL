@@ -54,6 +54,7 @@ if __name__ == "__main__":
             torch.save(results, 'checkpoint.pth')
 
     elif answr == 0:
+        print(f"\ni - вверх\nj - влево\nk - вниз\nl - вправо\no - поднять\nu - положить")
         env.reset()
         vis.draw_env(env)
         with torch.no_grad():
@@ -84,10 +85,11 @@ if __name__ == "__main__":
                         state = utils.get_state(env)
                         action = env.units[0].possible_actions[action_ind]
                         reward = utils.release_action_and_get_reward(env, action)
-                        print(reward, action.__name__)
+                        print(f'reward: {reward}, action: {action.__name__}')
                         done = utils.is_episode_ended(env)
                         if done:
                             print(f'episode ended')
+                            print('-' * 100)
                             env.reset()
 
                 vis.draw_env(env)
@@ -122,8 +124,9 @@ if __name__ == "__main__":
                     
                     action = unit.possible_actions[action_ind]
                     reward = utils.release_action_and_get_reward(env, action)
-                    print(reward, np.exp(log_prob), action.__name__)
-
+                    print(f"action: {action.__name__}, reward: {reward}, probability: {np.round(np.exp(log_prob), 4)}")
+            
                 done = utils.is_episode_ended(env)
                 if done:
                     env.reset()
+                    print('-' * 100)
